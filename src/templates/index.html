@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="description" content="Generate context for LLM from your Steam library" />
+  <meta charset="utf-8">
+  <title>Gamer Context for LLMs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="author" content="diachkovspecial@gmail.com">
+</head>
+<body>
+	<h1>Gamer Context for LLMs</h1>
+	{%- if request.session.steam_id -%}
+		<p><strong>You are logged in!</strong> (steam ID: {{ request.session.steam_id }})</p>
+	{%- else -%}
+		<p><a href="{{ url_for('steam-login:trigger') }}">Click here</a> to log in</p>
+	{%- endif -%}
+	<p>2025 All rights reserved</p>
+</body>
+</html>

@@ -3,9 +3,12 @@ from logging.config import dictConfig
 
 
 from starlette.applications import Starlette
+from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, RedirectResponse, Response
 from starlette.routing import Mount, Route
+from starlette.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
 
 from src import settings, steam_api
 
@@ -41,6 +44,11 @@ dictConfig(
 )
 
 logger = logging.getLogger("app")
+templates = Jinja2Templates(directory=settings.PROJECT_DIR / "src/templates")
+
+
+async def homepage(request: Request) -> Response:
+    return templates.TemplateResponse(request, "index.html")
 
 
 async def trigger_steam_login(request: Request) -> Response:
@@ -56,10 +64,11 @@ async def steam_login_callback(request: Request) -> Response:
         )
     except steam_api.LoginFailedError as err:
         logger.warning("Failed to finish Steam Login flow due to error: %s", err)
-        return JSONResponse({"error": str(err)})
+        return RedirectResponse(request.url_for("index"))
 
     logger.info("Steam ID: %s", steam_id)
-    return JSONResponse({"steamid": steam_id})
+    request.session["steam_id"] = steam_id
+    return RedirectResponse(request.url_for("index"))
 
 
 async def owned_games(request: Request) -> Response:
@@ -102,7 +111,14 @@ app = Starlette(
             methods=["get"],
             name="owned-games",
         ),
+        Route(
+            path="/",
+            endpoint=homepage,
+            methods=["get"],
+            name="index",
+        ),
     ],
+    middleware=[Middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)],
 )
 
 
