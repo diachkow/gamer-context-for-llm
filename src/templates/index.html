@@ -6,14 +6,22 @@
   <title>Gamer Context for LLMs</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="author" content="diachkovspecial@gmail.com">
+  <link href="{{ url_for('static', path='/output.css') }}" rel="stylesheet">
 </head>
 <body>
-	<h1>Gamer Context for LLMs</h1>
-	{%- if request.session.steam_id -%}
-		<p><strong>You are logged in!</strong> (steam ID: {{ request.session.steam_id }})</p>
-	{%- else -%}
-		<p><a href="{{ url_for('steam-login:trigger') }}">Click here</a> to log in</p>
-	{%- endif -%}
-	<p>2025 All rights reserved</p>
+  <div>
+    <section class="h-screen w-screen flex justify-center items-center p-2 bg-indigo-100">
+      <div class="w-2/5 text-left text-gray-800">
+        <h1 class="text-2xl mb-2">Gamer Context for LLMs</h1>
+        <p class="text-base">
+          {%- if request.session.steam_id %}
+          <strong>You are logged in!</strong> <span class="text-gray-600">(steam ID: {{ request.session.steam_id }})</span>
+          {%- else %}
+          <a href="{{ url_for('steam-login:trigger') }}" class="text-purple-500">Click here</a> to log in
+          {%- endif %}
+        </p>
+      </div>
+    </section>
+  </div>
 </body>
 </html>

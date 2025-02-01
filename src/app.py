@@ -9,6 +9,7 @@ from starlette.responses import JSONResponse, RedirectResponse, Response
 from starlette.routing import Mount, Route
 from starlette.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.staticfiles import StaticFiles
 
 from src import settings, steam_api
 
@@ -87,6 +88,13 @@ async def owned_games(request: Request) -> Response:
 app = Starlette(
     debug=settings.DEBUG,
     routes=[
+        # Static files
+        Mount(
+            path="/static",
+            app=StaticFiles(directory=settings.PROJECT_DIR / "src/static"),
+            name="static",
+        ),
+        # Actual routes
         Mount(
             path="/steam-login",
             routes=[
