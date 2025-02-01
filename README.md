@@ -8,7 +8,10 @@ This application allows users to create a context that can later be shared with 
 ```shell
 npm install -g concurrently
 ```
-2. Install [tailwindcss standalone executable](https://tailwindcss.com/blog/standalone-cli) and put it somewhere on your path, e.g. `$HOME/.local/bin`, so that it will be available from the command line.
+2. Install [`tailwindcss`](https://tailwindcss.com/) CLI:
+```shell
+npm install -g @tailwindcss/cli
+```
 3. Install project dependencies with `uv`. Make sure that tool is [installed](https://docs.astral.sh/uv/getting-started/installation/):
 ```shell
 uv sync
@@ -17,5 +20,5 @@ uv sync
 ```shell
 npx concurrently \
     "uv run uvicorn --host 0.0.0.0 --port 8000 src.app:app --reload --reload-dir=src/" \
-    "bin/tailwindcss -i src/static/input.css -o src/static/output.css --watch"
+    "npx tailwindcss -i src/static/input.css -o src/static/output.css --watch"
 ```
