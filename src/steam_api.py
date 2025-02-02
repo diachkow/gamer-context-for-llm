@@ -1,13 +1,17 @@
 """All functions related to working with Steam API."""
 
+import logging
 import re
-from typing import Final, Mapping
+from dataclasses import dataclass
+from typing import Final, Literal, Mapping, Sequence
 
 import httpx
 from starlette import status
 from starlette.datastructures import QueryParams
 
 from src import settings
+
+logger = logging.getLogger("app.steam_api")
 
 
 class LoginFailedError(Exception):
@@ -98,7 +102,7 @@ class SteamAPIRequestFailed(Exception):
         original_request: httpx.Request | None = None,
         original_response: httpx.Response | None = None,
     ) -> None:
-        self._message = str
+        self._message = original_message
         self._request = original_request
         self._response = original_response
 
@@ -118,8 +122,34 @@ class SteamAPIRequestFailed(Exception):
         return self._response
 
 
-async def get_owned_games(steam_id: str):
+@dataclass(frozen=True, slots=True)
+class SteamGame:
+    appid: int
+    name: str
+    playtime: float
+    """Total game playtime in hours."""
+
+    icon_id: str
+    """App icon identifier to construct URL."""
+
+    last_played: int
+    """Relative timestamp."""
+
+    @property
+    def icon_url(self) -> str:
+        return "https://media.steampowered.com/steamcommunity/public/images/apps/{}/{}.jpg".format(
+            self.appid,
+            self.icon_id,
+        )
+
+
+__cached_games: dict[str, list[SteamGame]] = {}
+
+
+async def get_owned_games(steam_id: str) -> list[SteamGame]:
     """Get the list of user-owned games.
+
+    API Docs: https://partner.steamgames.com/doc/webapi/iplayerservice
 
     :param steam_id: Steam user unique identifier.
 
@@ -127,6 +157,13 @@ async def get_owned_games(steam_id: str):
 
     :returns: Raw response data of owned games request.
     """
+    global __cached_games
+    if cached := __cached_games.get(steam_id):
+        logger.info("Get cached response for owned games!")
+        return cached
+
+    logger.info("No cached response, making actual request")
+
     url = "https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/"
 
     async with httpx.AsyncClient() as client:
@@ -136,7 +173,8 @@ async def get_owned_games(steam_id: str):
                 params={
                     "steamid": steam_id,
                     "key": str(settings.STEAM_API_KEY),
-                    "format": "json",
+                    "include_played_free_games": True,
+                    "include_appinfo": True,
                 },
             )
             r.raise_for_status()
@@ -147,4 +185,104 @@ async def get_owned_games(steam_id: str):
                 original_response=getattr(err, "response", None),
             ) from err
 
-        return r.json()
+        response_data = r.json()
+
+    games = response_data.get("response", {}).get("games", [])
+    result: list[SteamGame] = []
+
+    if not games:
+        logger.warning(
+            "Empty games payload received for steam ID %s (response data: %s)",
+            steam_id,
+            response_data,
+        )
+        __cached_games[steam_id] = result
+        return result
+
+    for game in games:
+        try:
+            playtime_minutes = game["playtime_forever"]
+
+            if playtime_minutes > 0:
+                result.append(
+                    SteamGame(
+                        appid=game["appid"],
+                        name=game["name"],
+                        playtime=round(playtime_minutes / 60, ndigits=1),
+                        icon_id=game["img_icon_url"],
+                        last_played=game["rtime_last_played"],
+                    ),
+                )
+        except KeyError as err:
+            logger.error(
+                "Failed to transform %s value to SteamGame object. Original error: %s",
+                game,
+                err,
+            )
+            continue
+
+    __cached_games[steam_id] = result
+    return result
+
+
+@dataclass(frozen=True, slots=True)
+class SteamGameDetails:
+    name: str
+    appid: int
+    description: str
+    categories: Sequence[str]
+    genres: Sequence[str]
+    type: Literal["game"] = "game"
+
+
+__cached_app_details: dict[int, SteamGameDetails | None] = {}
+
+
+async def get_game_details(app_id: int) -> SteamGameDetails | None:
+    global __cached_app_details
+    if cached := __cached_app_details.get(app_id):
+        logger.info("Get cached app details for %s", app_id)
+        return cached
+
+    logger.info("No cached response for app ID %s", app_id)
+
+    url = "https://store.steampowered.com/api/appdetails"
+
+    async with httpx.AsyncClient() as client:
+        try:
+            r = await client.get(
+                url=url,
+                params={
+                    "appids": app_id,
+                },
+            )
+        except httpx.HTTPError as err:
+            raise SteamAPIRequestFailed(
+                original_message=str(err),
+                original_request=err.request,
+                original_response=getattr(err, "response", None),
+            ) from err
+
+        raw_response = r.json()
+
+    app_data = raw_response[str(app_id)]["data"]
+
+    result: SteamGameDetails | None
+    if app_data["type"] != "game":
+        logger.warning(
+            "Steam App ID %s is not a game. Original data: %s",
+            app_id,
+            raw_response,
+        )
+        result = None
+    else:
+        result = SteamGameDetails(
+            name=app_data["name"],
+            appid=app_id,
+            description=app_data["about_the_game"],
+            categories=[category["description"] for category in app_data["categories"]],
+            genres=[genre["description"] for genre in app_data["genres"]],
+        )
+
+    __cached_app_details[app_id] = result
+    return result

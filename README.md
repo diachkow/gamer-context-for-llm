@@ -17,5 +17,5 @@ uv sync
 ```shell
 npx concurrently \
     "uv run uvicorn --host 0.0.0.0 --port 8000 src.app:app --reload --reload-dir=src/" \
-    "bin/tailwindcss -i src/static/input.css -o src/static/output.css --watch"
+    "tailwindcss -i src/static/input.css -o src/static/output.css --watch"
 ```

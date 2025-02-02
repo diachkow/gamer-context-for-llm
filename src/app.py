@@ -1,15 +1,15 @@
+import asyncio
 import logging
 from logging.config import dictConfig
 
-
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
-from starlette.requests import Request
-from starlette.responses import JSONResponse, RedirectResponse, Response
-from starlette.routing import Mount, Route
-from starlette.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.requests import Request
+from starlette.responses import RedirectResponse, Response
+from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
+from starlette.templating import Jinja2Templates
 
 from src import settings, steam_api
 
@@ -49,12 +49,61 @@ templates = Jinja2Templates(directory=settings.PROJECT_DIR / "src/templates")
 
 
 async def homepage(request: Request) -> Response:
+    if request.session["steam_id"] is not None:
+        return RedirectResponse(request.url_for("playground"))
     return templates.TemplateResponse(request, "index.html")
+
+
+async def playground(request: Request) -> Response:
+    if request.session["steam_id"] is None:
+        return RedirectResponse(request.url_for("index"))
+
+    games = await steam_api.get_owned_games(steam_id=request.session["steam_id"])
+
+    # Sort games from most played to least played
+    games = sorted(games, key=lambda g: g.playtime, reverse=True)
+    games = games[:50]  # Use no more then 50 games
+
+    return templates.TemplateResponse(
+        request=request,
+        name="playground.html",
+        context={
+            "games_count": len(games),
+            "games": games,
+        },
+    )
+
+
+async def generate_context(request: Request) -> Response:
+    if request.session["steam_id"] is None:
+        return RedirectResponse(request.url_for("index"))
+
+    games = await steam_api.get_owned_games(steam_id=request.session["steam_id"])
+
+    # Sort games from most played to least played
+    games = sorted(games, key=lambda g: g.playtime, reverse=True)
+    games = games[:50]  # Use no more then 50 games
+
+    details = await asyncio.gather(
+        *(asyncio.create_task(steam_api.get_game_details(game.appid)) for game in games)
+    )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="context.html",
+        context={
+            "games": [
+                {"game": game, "game_details": game_details}
+                for game, game_details in zip(games, details)
+                if details is not None
+            ],
+        },
+    )
 
 
 async def trigger_steam_login(request: Request) -> Response:
     callback_url = request.url_for("steam-login:callback")
-    steam_login_url = steam_api.generate_login_url(callback_url)
+    steam_login_url = steam_api.generate_login_url(str(callback_url))
     return RedirectResponse(steam_login_url)
 
 
@@ -69,20 +118,7 @@ async def steam_login_callback(request: Request) -> Response:
 
     logger.info("Steam ID: %s", steam_id)
     request.session["steam_id"] = steam_id
-    return RedirectResponse(request.url_for("index"))
-
-
-async def owned_games(request: Request) -> Response:
-    if "steamid" not in request.query_params:
-        return JSONResponse({"steamid": "Missing query parameter"})
-
-    try:
-        owned_games = await steam_api.get_owned_games(request.query_params["steamid"])
-    except steam_api.SteamAPIRequestFailed as err:
-        logger.warning("Failed to fetch user owned games due to error: %s", err)
-        return JSONResponse({"error": "Failed to fetch user owned games"})
-
-    return JSONResponse(owned_games)
+    return RedirectResponse(request.url_for("playground"))
 
 
 app = Starlette(
@@ -114,10 +150,16 @@ app = Starlette(
             name="steam-login",
         ),
         Route(
-            path="/owned-games",
-            endpoint=owned_games,
+            path="/playground",
+            endpoint=playground,
             methods=["get"],
-            name="owned-games",
+            name="playground",
+        ),
+        Route(
+            path="/generate-context",
+            endpoint=generate_context,
+            methods=["post"],
+            name="generate-context",
         ),
         Route(
             path="/",

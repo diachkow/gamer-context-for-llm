@@ -1,27 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta name="description" content="Generate context for LLM from your Steam library" />
-  <meta charset="utf-8">
-  <title>Gamer Context for LLMs</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="author" content="diachkovspecial@gmail.com">
-  <link href="{{ url_for('static', path='/output.css') }}" rel="stylesheet">
-</head>
-<body>
-  <div>
-    <section class="h-screen w-screen flex justify-center items-center p-2 bg-indigo-100">
-      <div class="w-2/5 text-left text-gray-800">
-        <h1 class="text-2xl mb-2">Gamer Context for LLMs</h1>
-        <p class="text-base">
-          {%- if request.session.steam_id %}
-          <strong>You are logged in!</strong> <span class="text-gray-600">(steam ID: {{ request.session.steam_id }})</span>
-          {%- else %}
-          <a href="{{ url_for('steam-login:trigger') }}" class="text-purple-500">Click here</a> to log in
-          {%- endif %}
-        </p>
-      </div>
-    </section>
+{% extends "base.html" %}
+
+{%- block title %}
+<title>Gamer Context for LLMs — Login</title>
+{%- endblock %}
+
+
+{%- block body %}
+<main class="h-screen w-screen flex justify-center items-center bg-indigo-50">
+  <!-- Index page content -->
+  <div class="max-w-3xl w-full">
+
+    <!-- Text block (header & description) -->
+    <div class="w-full text-left text-gray-800 mb-4">
+      <h1 class="text-2xl mb-4">Gamer Context for LLMs</h1>
+      <p class="text-base">
+        This is the platform, where you can generate a context from your Steam library, that can be then shared to LLM and asked questions on, like, for example, which next game to play.
+      </p>
+    </div>
+
+    <!-- Login button -->
+    <div class="w-full flex justify-center items-center">
+      <a 
+        href="{{ url_for('steam-login:trigger') }}"
+        class="block pl-3 pr-3 pt-1 pb-1 text-center text-lg bg-indigo-600 text-gray-100 rounded-md">
+        Login via Steam <span class="text-base">→</span>
+      </a>
+    </div>
+
   </div>
-</body>
-</html>
+</main>
+{%- endblock %}

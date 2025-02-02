@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="Generate context for LLM from your Steam library" />
+
+  {%- block title %}
+  <title>Gamer Context for LLMs</title>
+  {%- endblock %}
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="author" content="diachkovspecial@gmail.com">
+
+  <link href="{{ url_for('static', path='/output.css') }}" rel="stylesheet">
+
+  {%- block head_extra %}
+  {%- endblock %}
+</head>
+
+<body>
+  {%- block body %}
+  <div class="w-screen h-screen bg-indigo-50 flex justify-center items-center">
+    <h1 class="text-center text-4xl text-gray-800">— 404 Not Found —</h1>
+  </div>
+  {%- endblock %}
+</body>
+
+</html>

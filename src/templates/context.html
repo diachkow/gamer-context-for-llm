@@ -1,0 +1,27 @@
+<div class="w-full">
+  <p class="mb-2 text-xl font-semibold text-left">
+    Your Gamer LLM Context:
+  </p>
+  <textarea
+    class="bg-indigo-200 rounded-sm border-gray-800 p-2 w-full h-[300px] overflow-y-auto resize-none"
+    readonly>
+List of my Steam library games, ordered from most played to least played:
+
+{%- for item in games %}
+{%- if loop.first %}
+
+{% endif -%}
+## Game — {{ item.game.name }}
+
+Hours played: {{ item.game.playtime }}
+Genres: {{ item.game_details.genres|join(', ') }}
+Categories: {{ item.game_details.categories|join(', ') }}
+Description: {{ item.game_details.description|striptags }}
+{%- if not loop.last %}
+
+
+{% endif -%}
+{% endfor -%}
+  </textarea>
+</div>
+
