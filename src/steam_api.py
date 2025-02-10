@@ -265,7 +265,11 @@ async def get_game_details(app_id: int) -> SteamGameDetails | None:
 
         raw_response = r.json()
 
-    app_data = raw_response[str(app_id)]["data"]
+    response_data = raw_response[str(app_id)]
+    if not response_data["success"]:
+        return None
+
+    app_data = response_data["data"]
 
     result: SteamGameDetails | None
     if app_data["type"] != "game":

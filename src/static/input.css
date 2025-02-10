@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+.font-headline {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+.font-base {
+  font-family: 'Inter', system-ui, sans-serif;
+}

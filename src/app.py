@@ -49,13 +49,13 @@ templates = Jinja2Templates(directory=settings.PROJECT_DIR / "src/templates")
 
 
 async def homepage(request: Request) -> Response:
-    if request.session["steam_id"] is not None:
+    if request.session.get("steam_id") is not None:
         return RedirectResponse(request.url_for("playground"))
-    return templates.TemplateResponse(request, "index.html")
+    return templates.TemplateResponse(request, "pages/login.html")
 
 
 async def playground(request: Request) -> Response:
-    if request.session["steam_id"] is None:
+    if request.session.get("steam_id") is None:
         return RedirectResponse(request.url_for("index"))
 
     games = await steam_api.get_owned_games(steam_id=request.session["steam_id"])
@@ -66,7 +66,7 @@ async def playground(request: Request) -> Response:
 
     return templates.TemplateResponse(
         request=request,
-        name="playground.html",
+        name="pages/app.html",
         context={
             "games_count": len(games),
             "games": games,
@@ -90,7 +90,7 @@ async def generate_context(request: Request) -> Response:
 
     return templates.TemplateResponse(
         request=request,
-        name="context.html",
+        name="components/context.html",
         context={
             "games": [
                 {"game": game, "game_details": game_details}

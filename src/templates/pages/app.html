@@ -1,0 +1,57 @@
+{% extends "pages/base.html" %}
+
+{%- block title %}
+<title>Gamer Context for LLMs — Playground</title>
+{%- endblock %}
+
+{%- block head_extra %}
+<script src="{{ url_for('static', path='/htmx.min.js') }}"></script>
+{% endblock %}
+
+{%- block body %}
+<div class="min-h-screen flex flex-col bg-white font-base">
+  <main class="flex-grow">
+    <div class="max-w-4xl mx-auto px-4 py-6">
+      <!-- Top navbar -->
+      <nav class="flex items-center justify-between mb-8">
+        <a href="{{ url_for('playground') }}" class="text-2xl font-bold text-gray-900 font-headline">
+          Gamer Context for LLMs
+        </a>
+        <p class="text-gray-600">
+          Steam ID: <span class="font-medium text-gray-800">{{ request.session.steam_id }}</span>
+        </p>
+      </nav>
+
+      <!-- Steam library section -->
+      <section class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 font-headline">
+          We found {{ games_count}} games in your library:
+        </h2>
+        <div class="grid grid-cols-3 gap-4">
+          {%- for game in games[:3] %}
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <p class="text-base font-bold text-gray-900 mb-1">{{ game.name }}</p>
+            <p class="text-gray-600 text-sm">{{ game.playtime }} hrs. played</p>
+          </div>
+          {%- endfor %}
+          {%- if games_count > 3 %}
+          <p class="text-gray-600 mt-2">And {{ games_count - 3 }} more ...</p>
+          {%- endif %}
+        </div>
+      </section>
+
+      <!-- Generate context section -->
+      <section class="flex justify-center">
+        <button
+          class="inline-flex px-6 py-3 text-lg font-medium text-white bg-[#1a4066] hover:bg-[#1b4977] rounded-md transition-colors font-headline"
+          hx-post="/generate-context"
+          hx-swap="outerHTML">
+          Generate Context
+        </button>
+      </section>
+    </div>
+  </main>
+
+  {% include "components/footer.html" %}
+</div>
+{%- endblock %}
