@@ -58,7 +58,8 @@ async def process_postlogin_params(params: Mapping[str, str]) -> str:
     validation_params: dict[str, str] = {
         key: val
         for key, val in params.items()
-        if key in ["openid.assoc_handle", "openid.signed", "openid.sig", "openid.ns"]
+        if key
+        in ["openid.assoc_handle", "openid.signed", "openid.sig", "openid.ns"]
     }
     signed_params: list[str] = params["openid.signed"].split(",")
 
@@ -80,10 +81,13 @@ async def process_postlogin_params(params: Mapping[str, str]) -> str:
 
         if "is_valid:true" not in r.text:
             raise LoginFailedError(
-                f"Validation response does not contain 'is_valid:true' at the end: {r.text}"
+                "Validation response does not contain 'is_valid:true' at "
+                f"the end: {r.text}"
             )
 
-        matched_steam_id = re.search(STEAM_ID_REGEX, params["openid.claimed_id"])
+        matched_steam_id = re.search(
+            STEAM_ID_REGEX, params["openid.claimed_id"]
+        )
 
         if not matched_steam_id:
             raise LoginFailedError(
@@ -215,7 +219,8 @@ async def get_owned_games(steam_id: str) -> list[SteamGame]:
                 )
         except KeyError as err:
             logger.error(
-                "Failed to transform %s value to SteamGame object. Original error: %s",
+                "Failed to transform %s value to SteamGame object. Original "
+                "error: %s",
                 game,
                 err,
             )
@@ -284,7 +289,9 @@ async def get_game_details(app_id: int) -> SteamGameDetails | None:
             name=app_data["name"],
             appid=app_id,
             description=app_data["about_the_game"],
-            categories=[category["description"] for category in app_data["categories"]],
+            categories=[
+                category["description"] for category in app_data["categories"]
+            ],
             genres=[genre["description"] for genre in app_data["genres"]],
         )
 

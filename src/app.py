@@ -19,7 +19,9 @@ dictConfig(
         "disable_existing_loggers": False,
         "formatters": {
             "standard": {
-                "format": "%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+                "format": (
+                    "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+                ),
             },
         },
         "handlers": {
@@ -58,7 +60,9 @@ async def playground(request: Request) -> Response:
     if request.session.get("steam_id") is None:
         return RedirectResponse(request.url_for("index"))
 
-    games = await steam_api.get_owned_games(steam_id=request.session["steam_id"])
+    games = await steam_api.get_owned_games(
+        steam_id=request.session["steam_id"]
+    )
 
     # Sort games from most played to least played
     games = sorted(games, key=lambda g: g.playtime, reverse=True)
@@ -78,14 +82,19 @@ async def generate_context(request: Request) -> Response:
     if request.session["steam_id"] is None:
         return RedirectResponse(request.url_for("index"))
 
-    games = await steam_api.get_owned_games(steam_id=request.session["steam_id"])
+    games = await steam_api.get_owned_games(
+        steam_id=request.session["steam_id"]
+    )
 
     # Sort games from most played to least played
     games = sorted(games, key=lambda g: g.playtime, reverse=True)
     games = games[:50]  # Use no more then 50 games
 
     details = await asyncio.gather(
-        *(asyncio.create_task(steam_api.get_game_details(game.appid)) for game in games)
+        *(
+            asyncio.create_task(steam_api.get_game_details(game.appid))
+            for game in games
+        )
     )
 
     return templates.TemplateResponse(
@@ -94,7 +103,7 @@ async def generate_context(request: Request) -> Response:
         context={
             "games": [
                 {"game": game, "game_details": game_details}
-                for game, game_details in zip(games, details)
+                for game, game_details in zip(games, details, strict=True)
                 if details is not None
             ],
         },
@@ -113,7 +122,9 @@ async def steam_login_callback(request: Request) -> Response:
             params=request.query_params,
         )
     except steam_api.LoginFailedError as err:
-        logger.warning("Failed to finish Steam Login flow due to error: %s", err)
+        logger.warning(
+            "Failed to finish Steam Login flow due to error: %s", err
+        )
         return RedirectResponse(request.url_for("index"))
 
     logger.info("Steam ID: %s", steam_id)

@@ -1,0 +1,41 @@
+line-length = 79
+fix = true
+output-format = "grouped"
+target-version = "py313"
+exclude = [".venv"]
+
+[lint]
+select = [
+	"E",   # pycodestyle errors
+	"W",   # pycodestyle warnings
+	"F",   # pyflakes
+	"C90", # mccabe
+	"I",   # isort
+	"S",   # flake8-bandit
+	"B",   # flake8-bugbear
+	"COM", # flake8-commas
+	"C4",  # flake8-comprehensions
+	"T10", # flake8-debugger
+	"T20", # flake8-print
+	"Q",   # flake8-quotes
+	"LOG", # flake8-logging
+	"G",   # flake8-logging-format
+	"RUF", # Ruff-specific rules
+]
+fixable = [
+	"E",   # pycodestyle errors
+	"F",   # pyflakes
+	"Q",   # flake8-quotes
+	"I",   # isort
+	"RUF", # Ruff-specific rules
+]
+ignore = [
+	"S101",   # use of assert detected
+	"COM812", # missing trailing comma (conflicts somehow with ruff formatter)
+]
+
+[lint.isort]
+known-first-party = ["src"]
+
+[format]
+quote-style = "double"
