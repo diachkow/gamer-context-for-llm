@@ -11,7 +11,7 @@ from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
-from src import settings, steam_api
+from src import middlewares, settings, steam_api
 
 dictConfig(
     {
@@ -50,10 +50,15 @@ logger = logging.getLogger("app")
 templates = Jinja2Templates(directory=settings.PROJECT_DIR / "src/templates")
 
 
-async def homepage(request: Request) -> Response:
+async def index(request: Request) -> Response:
     if request.session.get("steam_id") is not None:
         return RedirectResponse(request.url_for("playground"))
     return templates.TemplateResponse(request, "pages/login.html")
+
+
+async def logout(request: Request) -> Response:
+    request.session.pop("steam_id", None)
+    return RedirectResponse(request.url_for("index"))
 
 
 async def playground(request: Request) -> Response:
@@ -174,12 +179,21 @@ app = Starlette(
         ),
         Route(
             path="/",
-            endpoint=homepage,
+            endpoint=index,
             methods=["get"],
             name="index",
         ),
+        Route(
+            "/logout",
+            endpoint=logout,
+            methods=["get"],
+            name="logout",
+        ),
     ],
-    middleware=[Middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)],
+    middleware=[
+        Middleware(SessionMiddleware, secret_key=settings.SECRET_KEY),
+        Middleware(middlewares.StaticHttpsRedirect),
+    ],
 )
 
 
