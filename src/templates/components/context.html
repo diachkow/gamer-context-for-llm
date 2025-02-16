@@ -3,11 +3,20 @@
   <h2 class="text-xl font-bold text-gray-900 mb-4 font-headline">
     Your Gamer LLM Context
   </h2>
-  <button 
-    class="absolute right-3 top-14 z-10 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-md transition-colors font-headline flex items-center gap-1"
-    onclick="handleCopy(this);">
-    Copy
-  </button>
+
+  <div class="absolute right-3 top-14 z-10 flex gap-2">
+    <button 
+      class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded-md transition-colors font-headline flex items-center gap-2"
+      onclick="handleCopy(this);">
+      <img src="{{ url_for('static', path='/assets/clipboard_icon.svg') }}"/>
+    </button>
+    <button 
+      class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded-md transition-colors font-headline flex items-center gap-2"
+      onclick="handleExport(this);">
+      <img src="{{ url_for('static', path='/assets/file_icon.svg') }}"/>
+    </button>
+  </div>
+
   <textarea
     class="w-full min-w-[824px] h-96 p-4 bg-gray-50 border border-gray-200 rounded-lg font-base text-gray-800 resize-none focus:outline-none"
     readonly>
@@ -30,5 +39,6 @@ Description: {{ item.game_details.description|striptags }}
 {% endfor -%}
   </textarea>
 
-  <script src="{{ url_for('static', path='/copy_context.js') }}"></script>
+  <!-- Script that provides handleExport and handleCopy buttons -->
+  <script src="{{ url_for('static', path='/save_context.js') }}?v=2"></script>
 </div>
