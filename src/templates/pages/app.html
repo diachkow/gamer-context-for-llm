@@ -5,6 +5,7 @@
 {%- endblock %}
 
 {%- block head_extra %}
+<meta name="htmx-config" content='{"includeIndicatorStyles": false}'>
 <script src="{{ url_for('static', path='/htmx.min.js') }}"></script>
 {% endblock %}
 
@@ -50,12 +51,26 @@
       <!-- Generate context section -->
       <section class="flex justify-center">
         <button
-          class="inline-flex px-6 py-3 text-lg font-medium text-white bg-[#1a4066] hover:bg-[#1b4977] rounded-md transition-colors font-headline"
+          class="group inline-flex items-center px-6 py-3 text-lg font-medium text-white bg-[#1a4066] hover:bg-[#1b4977] rounded-md transition-colors font-headline disabled:opacity-75 disabled:cursor-not-allowed"
           hx-post="/generate-context"
-          hx-swap="outerHTML">
-          Generate Context
+          hx-swap="outerHTML"
+        >
+          <!-- Loading spinner (hidden by default) -->
+          <div class="hidden items-center group-[.htmx-request]:inline-flex">
+            <span>Generating </span>
+            <svg class="animate-spin ml-3 mr-1 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+
+          <!-- Default text -->
+          <span class="block group-[.htmx-request]:hidden">
+            Generate Context
+          </span>
         </button>
       </section>
+
     </div>
   </main>
 
