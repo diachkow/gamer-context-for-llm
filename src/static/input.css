@@ -7,15 +7,3 @@
 .font-base {
   font-family: 'Inter', system-ui, sans-serif;
 }
-
-/*.htmx-indicator {*/
-/*  display: none;*/
-/*}*/
-/*.htmx-request .htmx-indicator {*/
-/*  display: inline-flex;*/
-/*  align-items: center;*/
-/*}*/
-/**/
-/*.htmx-request .htmx-request-template {*/
-/*  display: none;*/
-/*}*/
