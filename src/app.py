@@ -2,6 +2,7 @@ import asyncio
 import logging
 from logging.config import dictConfig
 from operator import attrgetter
+from typing import cast
 
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
@@ -66,35 +67,27 @@ async def app_handler(request: Request) -> Response:
     if request.session.get("steam_id") is None:
         return RedirectResponse(request.url_for("index"))
 
-    order_by = request.query_params.get("order_by", "most_played")
+    order_by = request.query_params.get("order_by", "playtime")
 
     games = await steam_api.get_owned_games(
         steam_id=request.session["steam_id"]
     )
 
-    sort_field_map: dict[str, tuple[str, bool]] = {
-        "most_played": ("playtime", True),
-        "recently_played": ("last_played", True),
-    }
-    sort_field, sort_reverse = sort_field_map[order_by]
-
     # Sort games from most played to least played
     games = sorted(
         games,
-        key=attrgetter(sort_field),
-        reverse=sort_reverse,
+        key=attrgetter(order_by),
+        reverse=True,
     )
     games = games[:50]  # Use no more then 50 games
 
     context = {
         "games": games,
         "games_count": len(games),
-        "order_by": order_by,  # Add order_by to context
+        "order_by": order_by,
     }
 
-    is_htmx_request = request.headers.get("HX-Request") == "true"
-
-    if is_htmx_request:
+    if request.state.htmx:  # partial render on HTMX requests
         return templates.TemplateResponse(
             request=request,
             name="components/content-area.html",
@@ -114,23 +107,17 @@ async def generate_context(request: Request) -> Response:
 
     # Get ordering from form data
     form = await request.form()
-    order_by: str = form.get("order_by", "most_played")
+    order_by = cast(str, form.get("order_by", "playtime"))
 
     games = await steam_api.get_owned_games(
         steam_id=request.session["steam_id"]
     )
 
-    sort_field_map: dict[str, tuple[str, bool]] = {
-        "most_played": ("playtime", True),
-        "recently_played": ("last_played", True),
-    }
-    sort_field, sort_reverse = sort_field_map[order_by]
-
     # Sort games using the same logic as app_handler
     games = sorted(
         games,
-        key=attrgetter(sort_field),
-        reverse=sort_reverse,
+        key=attrgetter(order_by),
+        reverse=True,
     )
     games = games[:50]  # Use no more then 50 games
 
@@ -236,5 +223,6 @@ app = Starlette(
     middleware=[
         Middleware(SessionMiddleware, secret_key=settings.SECRET_KEY),
         Middleware(middlewares.StaticHttpsRedirect),
+        Middleware(middlewares.HTMXMiddleware),
     ],
 )

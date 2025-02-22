@@ -15,8 +15,8 @@
         hx-trigger="change"
         hx-include="[name='order_by']"
       >
-        <option value="most_played" {% if order_by == 'most_played' %}selected{% endif %}>Most played</option>
-        <option value="recently_played" {% if order_by == 'recently_played' %}selected{% endif %}>Recently played</option>
+        <option value="playtime" {% if order_by == 'playtime' %}selected{% endif %}>Most played</option>
+        <option value="last_played" {% if order_by == 'last_played' %}selected{% endif %}>Recently played</option>
       </select>
     </div>
   </div>
@@ -80,7 +80,7 @@
     <textarea
       class="w-full min-w-[824px] h-96 p-4 bg-gray-50 border border-gray-200 rounded-lg font-base text-gray-800 resize-none focus:outline-none"
       readonly>
-List of my Steam library games, ordered from {{ order_by|replace('_', ' ') }}:
+List of my Steam library games, ordered by {{ order_by|replace('_', ' ') }}:
 
 {%- for item in context_items %}
 {%- if loop.first %}
