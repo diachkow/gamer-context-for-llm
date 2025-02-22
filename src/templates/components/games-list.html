@@ -1,0 +1,10 @@
+{%- for game in games[:3] %}
+<div class="bg-gray-50 p-4 rounded-lg">
+  <p class="text-base font-bold text-gray-900 mb-1">{{ game.name }}</p>
+  <p class="text-gray-600 text-sm">{{ game.playtime }} hrs. played</p>
+</div>
+{%- endfor %}
+{%- if games_count > 3 %}
+<p class="text-gray-600 mt-2">And {{ games_count - 3 }} more ...</p>
+{%- endif %}
+

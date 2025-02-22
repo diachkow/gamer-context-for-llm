@@ -1,0 +1,106 @@
+<!-- Steam library section -->
+<section class="mb-8">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-bold text-gray-900 font-headline">
+      We found {{ games_count }} games in your library:
+    </h2>
+    <div class="flex items-center">
+      <label for="order-by" class="mr-2 text-sm text-gray-600">Order by:</label>
+      <select
+        id="order-by"
+        name="order_by"
+        class="block w-40 rounded-md border-gray-300 py-1.5 text-gray-900 shadow-sm focus:border-[#1a4066] focus:ring-[#1a4066] sm:text-sm"
+        hx-get="/app"
+        hx-target="#content-area"
+        hx-trigger="change"
+        hx-include="[name='order_by']"
+      >
+        <option value="most_played" {% if order_by == 'most_played' %}selected{% endif %}>Most played</option>
+        <option value="recently_played" {% if order_by == 'recently_played' %}selected{% endif %}>Recently played</option>
+      </select>
+    </div>
+  </div>
+  
+  <div class="grid grid-cols-3 gap-4">
+    {%- for game in games[:3] %}
+    <div class="bg-gray-50 p-4 rounded-lg">
+      <p class="text-base font-bold text-gray-900 mb-1">{{ game.name }}</p>
+      <p class="text-gray-600 text-sm">{{ game.playtime }} hrs. played</p>
+    </div>
+    {%- endfor %}
+    {%- if games_count > 3 %}
+    <p class="text-gray-600 mt-2">And {{ games_count - 3 }} more ...</p>
+    {%- endif %}
+  </div>
+</section>
+
+<!-- Generate context section or display context if already generated -->
+<section class="flex justify-center">
+  {% if not context_generated %}
+  <button
+    class="group inline-flex items-center px-6 py-3 text-lg font-medium text-white bg-[#1a4066] hover:bg-[#1b4977] rounded-md transition-colors font-headline disabled:opacity-75 disabled:cursor-not-allowed"
+    hx-post="/generate-context"
+    hx-target="#content-area"
+    hx-include="[name='order_by']"
+  >
+    <!-- Loading spinner (hidden by default) -->
+    <div class="hidden items-center group-[.htmx-request]:inline-flex">
+      <span>Generating </span>
+      <svg class="animate-spin ml-3 mr-1 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+    </div>
+
+    <!-- Default text -->
+    <span class="block group-[.htmx-request]:hidden">
+      Generate Context
+    </span>
+  </button>
+  {% else %}
+  <!-- Context display section -->
+  <div class="max-w-4xl mx-auto relative">
+    <h2 class="text-xl font-bold text-gray-900 mb-4 font-headline">
+      Your Gamer LLM Context
+    </h2>
+
+    <div class="absolute right-3 top-14 z-10 flex gap-2">
+      <button 
+        class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded-md transition-colors font-headline flex items-center gap-2"
+        onclick="handleCopy(this);">
+        <img src="{{ url_for('static', path='/assets/clipboard_icon.svg') }}"/>
+      </button>
+      <button 
+        class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded-md transition-colors font-headline flex items-center gap-2"
+        onclick="handleExport(this);">
+        <img src="{{ url_for('static', path='/assets/file_icon.svg') }}"/>
+      </button>
+    </div>
+
+    <textarea
+      class="w-full min-w-[824px] h-96 p-4 bg-gray-50 border border-gray-200 rounded-lg font-base text-gray-800 resize-none focus:outline-none"
+      readonly>
+List of my Steam library games, ordered from {{ order_by|replace('_', ' ') }}:
+
+{%- for item in context_items %}
+{%- if loop.first %}
+
+{% endif -%}
+## Game — {{ item.game.name }}
+
+Hours played: {{ item.game.playtime }}
+Genres: {{ item.game_details.genres|join(', ') }}
+Categories: {{ item.game_details.categories|join(', ') }}
+Description: {{ item.game_details.description|striptags }}
+{%- if not loop.last %}
+
+
+{% endif -%}
+{% endfor -%}
+    </textarea>
+
+    <!-- Script that provides handleExport and handleCopy buttons -->
+    <script src="{{ url_for('static', path='/save_context.js') }}?v=2"></script>
+  </div>
+  {% endif %}
+</section>
